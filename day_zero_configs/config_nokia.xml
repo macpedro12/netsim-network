@@ -1,0 +1,35 @@
+<devices xmlns="http://tail-f.com/ns/ncs">
+  <device>
+    <name>{DEVICE NOKIA}</name>
+    <config>
+      <port xmlns="http://tail-f.com/ned/alu-sr">
+        <port-id>1/1/1</port-id>
+        <ethernet>
+          <mode>network</mode>
+        </ethernet>
+      </port>
+      <qos xmlns="http://tail-f.com/ned/alu-sr">
+        <sap-egress>
+          <policy-id>1</policy-id>
+          <name>1</name>
+          <queue>
+            <queue-id>1</queue-id>
+          </queue>
+          <policy-name>PHB_ACCESS_EGRESS</policy-name>
+        </sap-egress>
+        <sap-ingress>
+          <policy-id>1</policy-id>
+          <name>1</name>
+          <policy-name>PHB_ACCESS_INGRESS</policy-name>
+          <queue>
+            <queue-id>1</queue-id>
+          </queue>
+          <queue>
+            <queue-id>11</queue-id>
+            <multipoint/>
+          </queue>
+        </sap-ingress>
+      </qos>
+    </config>
+  </device>
+</devices>

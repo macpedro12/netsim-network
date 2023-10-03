@@ -1,0 +1,46 @@
+<devices xmlns="http://tail-f.com/ns/ncs">
+  <device>
+    <name>{DEVICE XR}</name>
+    <config>
+      <policy-map xmlns="http://tail-f.com/ned/cisco-ios-xr">
+        <name>PHB_ACCESS_EGRESS</name>
+        <class>
+          <class-default>
+            <map>class-default</map>
+            <service-policy>
+              <name>PHB_ACCESS_EGRESS</name>
+            </service-policy>
+          </class-default>
+        </class>
+      </policy-map>
+      <policy-map xmlns="http://tail-f.com/ned/cisco-ios-xr">
+        <name>PHB_ACCESS_INGRESS</name>
+        <class>
+          <class-default>
+            <map>class-default</map>
+            <service-policy>
+              <name>PHB_ACCESS_INGRESS</name>
+            </service-policy>
+          </class-default>
+        </class>
+      </policy-map>
+      <policy-map xmlns="http://tail-f.com/ned/cisco-ios-xr">
+        <name>TESTE</name>
+      </policy-map>
+      <interface xmlns="http://tail-f.com/ned/cisco-ios-xr">
+        <TenGigE>
+          <id>2/2/2</id>
+        </TenGigE>
+        <HundredGigE>
+          <id>3/3/3</id>
+        </HundredGigE>
+        <GigabitEthernet>
+          <id>0/0/1</id>
+        </GigabitEthernet>
+        <GigabitEthernet>
+          <id>1/1/1</id>
+        </GigabitEthernet>
+      </interface>
+    </config>
+  </device>
+</devices>

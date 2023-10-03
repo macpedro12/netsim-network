@@ -1,0 +1,30 @@
+<devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+        <name>{DEVICE VRP}</name>
+        <config>
+            <qos-profile xmlns="http://tail-f.com/ned/huawei-vrp">
+                <name>PHB_ACCESS_EGRESS</name>
+            </qos-profile>
+            <qos-profile xmlns="http://tail-f.com/ned/huawei-vrp">
+                <name>PHB_ACCESS_INGRESS</name>
+            </qos-profile>
+            <interface xmlns="http://tail-f.com/ned/huawei-vrp">
+                <TenGigabitEthernet>
+                    <name>1/1/1</name>
+                </TenGigabitEthernet>
+                <TwentyFiveGigabitEthernet>
+                    <name>2/2/2</name>
+                </TwentyFiveGigabitEthernet>
+                <FortyGigabitEthernet>
+                    <name>3/3/3</name>
+                </FortyGigabitEthernet>
+                <FiftyGigabitEthernet>
+                    <name>4/4/4</name>
+                </FiftyGigabitEthernet>
+                <HundredGigabitEthernet>
+                    <name>5/5/5</name>
+                </HundredGigabitEthernet>
+            </interface>
+        </config>
+    </device>
+</devices>
