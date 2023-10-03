@@ -1,0 +1,8 @@
+# Project Requirements
+
+lxml
+subprocess
+os
+shutil
+sys
+python-decouple
