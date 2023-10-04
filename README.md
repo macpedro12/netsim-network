@@ -20,10 +20,16 @@ It also creates the authgroup that the netsim devices will be inserted into.
 
 <h3 style="color:#00BFFF"> def init </h3>
 
-Creates the necessary configuration files and insertS the devices into the NSO.
+Creates the necessary configuration files and insertS the devices into NSO.
 
 <h3 style="color:#00BFFF"> def remove </h3>
 
 Removes the netsim devices from the NSO and delete the network created.
 
-<h3 style="color:#FF4000"> def config [TODO] </h3>
+<h3 style="color:#FF4000"> def config</h3>
+
+Change template name variable for the device created and load the configuration into NSO.
+
+<h3 style="color:#FF4000"> def create_network </h3>
+
+Call all the necessary functions to create a NETSIM network.
