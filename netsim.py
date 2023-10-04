@@ -25,6 +25,10 @@ devicesDict = {
 
 #It's possible to add as many devices types as you want, you just need to follow the pattern and add the config template to the script folder.
 
+#Device-groups that will be added to the NSO
+devicesGroup = ['PE','CE','MAN','AGGREGATOR','PE-CORP']
+
+
 def create():
     
     if os.path.exists(netsim_dir) == False:
@@ -75,6 +79,19 @@ def init():
             sync_device = subprocess.getoutput(f'echo "devices device {devicesDict[deviceKey][0]}{index} sync-from" | ncs_cli -C')
             print(f"Added {devicesDict[deviceKey][0]}{index} device \nsync-from: {sync_device}") 
             
+            # Creating the device-groups and adding the devices.
+            for group in devicesGroup:
+                
+                add_device_group = subprocess.getoutput(f'echo "config; devices device-group {group} device-name {devicesDict[deviceKey][0]}{index}; commit" | ncs_cli -Cu admin')
+                
+                if "Commit complete." in add_device_group:
+                
+                    print(f"Added {devicesDict[deviceKey][0]}{index} to {group} group.")
+                    
+                else:
+                    
+                    print(f"{devicesDict[deviceKey][0]}{index} message: {add_device_group}")
+            
             index += 1
         
         index = 0
@@ -96,6 +113,15 @@ def remove():
         index = 0
         
         while index < devicesDict[deviceKey][1]:
+            
+            # Removing the devices from the device-groups.
+            for group in devicesGroup:
+                
+                add_device_group = subprocess.getoutput(f'echo "config; no devices device-group {group} device-name {devicesDict[deviceKey][0]}{index}; commit" | ncs_cli -Cu admin')
+                
+                if "Commit complete." in add_device_group:
+                
+                    print(f"Removed {devicesDict[deviceKey][0]}{index} from {group} group.")
                     
             remove_netsim_nso = subprocess.getoutput(f'echo "config; no devices device {devicesDict[deviceKey][0]}{index}; commit" | ncs_cli -Cu admin')
             
