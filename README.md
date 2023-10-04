@@ -2,6 +2,8 @@
 
 Script will be used after an instalation of Cisco NSO (Network Service Orchestrator) to create dummy devices that will be used to validate the installed packages.
 
+<p style="color:red"> Change the 'script_dir' variable to the path where the script is located. </p>
+
 <h3 style="color:#00BFFF"> def create </h3>
 
 Creates the netsim devices based on the dict passed before, ex:
