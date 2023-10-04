@@ -8,6 +8,7 @@ import sys
 ncs_instance = os.environ["NCS_INSTANCE_DIR"]
 netsim_dir = f"{ncs_instance}/netsim"
 script_dir = "/root/create-netsim"
+
 # [TODO] ned_dir = f"{ncs_instance}/packages/NED"
 
 
@@ -20,7 +21,8 @@ devicesDict = {
     "xr":['xr',2,f"{ncs_instance}/packages/cisco-iosxr-cli-7.41"],
     "vrp":['vrp',2,f"{ncs_instance}/packages/huawei-vrp-cli-6.35"],
     "nokia":['PRAG',2,f"{ncs_instance}/packages/alu-sr-cli-8.28"], ## MAN UC only accepts nokia devices with "AC", "AG", "DI", "CO" in their hostnames.
-    "junos":['junos',2,f"{ncs_instance}/packages/juniper-junos-nc-4.6"]
+    "junos":['junos',2,f"{ncs_instance}/packages/juniper-junos-nc-4.6"],
+    "ios":['ios',2,f"{ncs_instance}/packages/cisco-ios-cli-6.77"]
 }
 
 #It's possible to add as many devices types as you want, you just need to follow the pattern and add the config template to the script folder.
@@ -133,6 +135,8 @@ def remove():
 
 def config():
     
+    # Needed if the function init() is called before config()
+    os.chdir(script_dir)
     
     for deviceKey in devicesDict:
         
@@ -143,18 +147,24 @@ def config():
         # devicesDict[deviceKey][2] == NED Dir
         
         while index < devicesDict[deviceKey][1]:
-                        
+            
+            try:           
             # Edit the config_{device}.xml templates         
-            with open(f'config_{deviceKey}.xml', encoding="utf8") as f:
-                tree = ET.parse(f)
-                root = tree.getroot()
+                with open(f'config_{deviceKey}.xml', encoding="utf8") as f:
+                    tree = ET.parse(f)
+                    root = tree.getroot()
 
-
-            for elem in root.getiterator(): # [TODO] Find a way to select only the <name> tag.
-                try:
-                   elem.text = elem.text.replace(f'{{DEVICE {deviceKey.upper()}}}', f'{devicesDict[deviceKey][0]}{index}')
-                except AttributeError:
-                    pass
+                
+                    
+                    for elem in root.getiterator(): # [TODO] Find a way to select only the <name> tag.
+                        try:
+                            elem.text = elem.text.replace(f'{{DEVICE {deviceKey.upper()}}}', f'{devicesDict[deviceKey][0]}{index}')
+                        except AttributeError:
+                            pass
+                    
+            except FileNotFoundError:
+                print(f"No config template found, the device {devicesDict[deviceKey][0]}{index} will be created without any change in the configuration")
+                pass
             
             # Bypassing system permissions
             os.chdir(netsim_dir)
@@ -164,13 +174,13 @@ def config():
             tree.write(f'output_{devicesDict[deviceKey][0]}{index}.xml', encoding="utf8")
             
             # Inserts the config into the NSO
+            
             insert_config = subprocess.getoutput(f"ncs_load -u admin -l -m output_{devicesDict[deviceKey][0]}{index}.xml")
-            print(insert_config)
+           
             
             # Delete the specific config file
             os.remove(f"output_{devicesDict[deviceKey][0]}{index}.xml")
             
-            # Bypassing system permissions
             os.chdir(script_dir)
             
             index += 1
