@@ -1,6 +1,4 @@
 import lxml.etree as ET
-from decouple import config
-
 import subprocess
 import os
 import shutil
@@ -9,7 +7,7 @@ import sys
 
 ncs_instance = os.environ["NCS_INSTANCE_DIR"]
 netsim_dir = f"{ncs_instance}/netsim"
-
+script_dir = "/root/create-netsim"
 # [TODO] ned_dir = f"{ncs_instance}/packages/NED"
 
 
@@ -21,9 +19,11 @@ netsim_dir = f"{ncs_instance}/netsim"
 devicesDict = {
     "xr":['xr',2,f"{ncs_instance}/packages/cisco-iosxr-cli-7.41"],
     "vrp":['vrp',2,f"{ncs_instance}/packages/huawei-vrp-cli-6.35"],
-    "nokia":['nokia',2,f"{ncs_instance}/packages/alu-sr-cli-8.28"],
+    "nokia":['PRAG',2,f"{ncs_instance}/packages/alu-sr-cli-8.28"], ## MAN UC only accepts nokia devices with "AC", "AG", "DI", "CO" in their hostnames.
     "junos":['junos',2,f"{ncs_instance}/packages/juniper-junos-nc-4.6"]
 }
+
+#It's possible to add as many devices types as you want, you just need to follow the pattern and add the config template to the script folder.
 
 def create():
     
@@ -42,14 +42,11 @@ def create():
         os.chdir(netsim_dir)
         add_to_network = subprocess.getoutput(f"ncs-netsim add-to-network {devicesDict[device][2]} {devicesDict[device][1]} {devicesDict[device][0]}")
         print(add_to_network)
-    
-    #Check if the authgroup has already been created, otherwise, creates the authgroup.
-    authgroup_password = config('AUTHGROUP_PASSWORD')
-    authgroup_check = subprocess.getoutput(f'echo "show running-config devices authgroup" | ncs_cli -C')
         
-    if 'authgroup default' not in authgroup_check:
-        
-        authgroup_create = subprocess.getoutput(f'echo "config; devices authgroup group default default-map remote-name admin remote-password {authgroup_password}; commit" | ncs_cli -C')
+    #Check if the authgroup default exists
+    authgroup = subprocess.getoutput(f'echo "show running-config devices authgroups" | ncs_cli -C')  
+    if 'devices authgroups group default' not in authgroup:
+        create_authgroup = subprocess.getoutput(f'echo "config; devices authgroups group default default-map remote-name admin remote-password admin; commit" | ncs_cli -C')
         
 def init():
     
@@ -59,21 +56,29 @@ def init():
     
     print(start_netsim)
     
+    # devicesDict[deviceKey][0] == Device Name
+    # devicesDict[deviceKey][1] == Number of Devices
+    # devicesDict[deviceKey][2] == NED Dir
+       
     for deviceKey in devicesDict:
         
         index = 0
-        
+                
         while index < devicesDict[deviceKey][1]:
             
-            init_netsim = subprocess.getoutput(f"ncs-netsim ncs-xml-init {deviceKey}{index} > device{deviceKey}{index}.xml")
-            print(init_netsim)
-            load_netsim = subprocess.getoutput(f"ncs_load -l -m device {deviceKey}{index}.xml")
-            print(load_netsim)
-
+            #Allowing the execution of the scripts (Needed for sync-from)
+            script_permission = subprocess.getoutput(f'find {devicesDict[deviceKey][0]}/ -name "*.sh" -exec chmod +x {{}} \;')
+            
+            init_netsim = subprocess.getoutput(f"ncs-netsim ncs-xml-init {devicesDict[deviceKey][0]}{index} > device{devicesDict[deviceKey][0]}{index}.xml")
+            load_netsim = subprocess.getoutput(f"ncs_load -l -m device{devicesDict[deviceKey][0]}{index}.xml")
+                     
+            sync_device = subprocess.getoutput(f'echo "devices device {devicesDict[deviceKey][0]}{index} sync-from" | ncs_cli -C')
+            print(f"Added {devicesDict[deviceKey][0]}{index} device \nsync-from: {sync_device}") 
+            
             index += 1
         
         index = 0
-        
+    
 def remove():
     
     os.chdir(netsim_dir)
@@ -82,21 +87,75 @@ def remove():
     
     print(stop_netsim)
     
+    # devicesDict[deviceKey][0] == Device Name
+    # devicesDict[deviceKey][1] == Number of Devices
+    # devicesDict[deviceKey][2] == NED Dir
+    
     for deviceKey in devicesDict:
         
         index = 0
         
-        for deviceNumber in devicesDict[deviceKey][1]:
-        
-            remove_netsim_nso = subprocess.getoutput(f'echo "config; no devices device {deviceKey}{deviceNumber}; commit" | ncs_cli -Cu admin')
-            print(remove_netsim_nso)
+        while index < devicesDict[deviceKey][1]:
+                    
+            remove_netsim_nso = subprocess.getoutput(f'echo "config; no devices device {devicesDict[deviceKey][0]}{index}; commit" | ncs_cli -Cu admin')
             
             index += 1
-
+    
         index = 0
         
     shutil.rmtree(netsim_dir)
 
+def config():
+    
+    
+    for deviceKey in devicesDict:
+        
+        index = 0
+        
+        # devicesDict[deviceKey][0] == Device Name
+        # devicesDict[deviceKey][1] == Number of Devices
+        # devicesDict[deviceKey][2] == NED Dir
+        
+        while index < devicesDict[deviceKey][1]:
+                        
+            # Edit the config_{device}.xml templates         
+            with open(f'config_{deviceKey}.xml', encoding="utf8") as f:
+                tree = ET.parse(f)
+                root = tree.getroot()
+
+
+            for elem in root.getiterator(): # [TODO] Find a way to select only the <name> tag.
+                try:
+                   elem.text = elem.text.replace(f'{{DEVICE {deviceKey.upper()}}}', f'{devicesDict[deviceKey][0]}{index}')
+                except AttributeError:
+                    pass
+            
+            # Bypassing system permissions
+            os.chdir(netsim_dir)
+                               
+            #tree.write('output.xml', encoding="utf8")
+            # Adding the xml_declaration and method helped keep the header info at the top of the file.
+            tree.write(f'output_{devicesDict[deviceKey][0]}{index}.xml', encoding="utf8")
+            
+            # Inserts the config into the NSO
+            insert_config = subprocess.getoutput(f"ncs_load -u admin -l -m output_{devicesDict[deviceKey][0]}{index}.xml")
+            print(insert_config)
+            
+            # Delete the specific config file
+            os.remove(f"output_{devicesDict[deviceKey][0]}{index}.xml")
+            
+            # Bypassing system permissions
+            os.chdir(script_dir)
+            
+            index += 1
+    
+        index = 0  
+
+def create_network():
+    
+    create()
+    init()
+    config()
 
 if __name__ == '__main__':
     args = sys.argv
@@ -104,41 +163,3 @@ if __name__ == '__main__':
     # args[1] = function name
     # args[2:] = function args : (*unpacked)
     globals()[args[1]](*args[2:])
-    
-
-""" def create_netsim():
-    
-    subprocess.run("ncs-netsim")
-    
-    #Checar se o diretório do NETSIM existe
-    #Criar o network || Adicionar device ao network
-    
-    #Inicializar o NETSIM
-    ##ncs-netsim start DEVICE
-    ##ncs-netsim ncs-xml-init DEVICE >> init.xml
-    ##ncs_load -l -m init.xml
-    
-    #Inserir configuração
-    ##ncs_load -l -m config_DEVICEType.xml
-    ##echo "devices device DEVICE sync-from" | ncs_cli -Cu admin
-    
-    #Inserir devices nos grupos
-    ##echo "config; devices device-group GROUP device-name DEVICE; commit" | ncs_cli -Cu admin
-    
-    
-    
-#adding the encoding when the file is opened and written is needed to avoid a charmap error
-with open('config_nokia.xml', encoding="utf8") as f:
-tree = ET.parse(f)
-root = tree.getroot()
-
-
-for elem in root.getiterator():
-    try:
-    elem.text = elem.text.replace('{DEVICE NAME}', 'Device1_nokia')
-    except AttributeError:
-    pass
-
-#tree.write('output.xml', encoding="utf8")
-# Adding the xml_declaration and method helped keep the header info at the top of the file.
-tree.write('output.xml', xml_declaration=True, method='xml', encoding="utf8") """
