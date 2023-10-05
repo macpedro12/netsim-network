@@ -20,18 +20,28 @@ Devices Dict = { <br>
 
 It also creates the authgroup that the netsim devices will be inserted into.
 
+Command: python3 netsim.py create
+
 <h3 style="color:#00BFFF"> def init </h3>
 
 Creates the necessary configuration files and insertS the devices into NSO.
+
+Command: python3 netsim.py init
 
 <h3 style="color:#00BFFF"> def remove </h3>
 
 Removes the netsim devices from the NSO and delete the network created.
 
+Command: python3 netsim.py remove
+
 <h3 style="color:#FF4000"> def config</h3>
 
 Change template name variable for the device created and load the configuration into NSO.
 
+Command: python3 netsim.py config
+
 <h3 style="color:#FF4000"> def create_network </h3>
 
-Call all the necessary functions to create a NETSIM network.
+Call all the necessary functions to create a NETSIM network (create, init, config).
+
+Command: python3 netsim.py create_network
