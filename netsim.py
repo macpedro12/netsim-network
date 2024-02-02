@@ -58,11 +58,7 @@ def create():
 def init():
     
     os.chdir(netsim_dir)
-    
-    start_netsim = subprocess.getoutput(f"ncs-netsim start")
-    
-    print(start_netsim)
-    
+        
     # devicesDict[deviceKey][0] == Device Name
     # devicesDict[deviceKey][1] == Number of Devices
     # devicesDict[deviceKey][2] == NED Dir
@@ -75,6 +71,9 @@ def init():
             
             #Allowing the execution of the scripts (Needed for sync-from)
             script_permission = subprocess.getoutput(f'find {devicesDict[deviceKey][0]}/ -name "*.sh" -exec chmod +x {{}} \;')
+            start_netsim = subprocess.getoutput(f"ncs-netsim start {devicesDict[deviceKey][0]}")
+    
+            print(start_netsim)
             
             init_netsim = subprocess.getoutput(f"ncs-netsim ncs-xml-init {devicesDict[deviceKey][0]}{index} > device{devicesDict[deviceKey][0]}{index}.xml")
             load_netsim = subprocess.getoutput(f"ncs_load -l -m device{devicesDict[deviceKey][0]}{index}.xml")
