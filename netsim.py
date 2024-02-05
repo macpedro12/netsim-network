@@ -7,7 +7,7 @@ import sys
 
 ncs_instance = os.environ["NCS_INSTANCE_DIR"]
 netsim_dir = f"{ncs_instance}/netsim"
-script_dir = "/root/create-netsim"
+script_dir = "/root/netsim-network"
 
 # [TODO] ned_dir = f"{ncs_instance}/packages/NED"
 
@@ -66,12 +66,12 @@ def init():
     for deviceKey in devicesDict:
         
         index = 0
-                
+        
         while index < devicesDict[deviceKey][1]:
             
             #Allowing the execution of the scripts (Needed for sync-from)
             script_permission = subprocess.getoutput(f'find {devicesDict[deviceKey][0]}/ -name "*.sh" -exec chmod +x {{}} \;')
-            start_netsim = subprocess.getoutput(f"ncs-netsim start {devicesDict[deviceKey][0]}")
+            start_netsim = subprocess.getoutput(f"ncs-netsim start {devicesDict[deviceKey][0]}{index}")
     
             print(start_netsim)
             
